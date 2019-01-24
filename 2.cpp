@@ -1,83 +1,74 @@
-#include <iostream>
-#include <string>
-#include <map>
-#include <vector>
-#include <algorithm>
-#include <fstream>
-#include <numeric>
+#include <iostream> 
+#include <map> 
+#include <string> 
+#include <vector> 
+#include <fstream> 
+#include <cstdio> 
+#include <algorithm> 
+#include <iterator> 
+
 using namespace std;
 
-struct Entity {
-	string Quary;
+struct Entity 
+{
+	string Query;
 	float Frequency;
-	Entity(string _q,float _f):Quary(_q),Frequency(_f){}
 };
 
-ostream& operator<<(ostream& os, const Entity& e) {
-	os <<"{'"<< e.Quary << "', " << e.Frequency <<"}";
-	return os;
-}
-
-//загрузка словаря из файла
-multimap<string, Entity> load(const string& fname) {
-	ifstream ins(fname);
-	multimap<string, Entity> dict;
-	if (ins.is_open()) {
-		string f, s;
-		float fg;
-		while (!ins.eof()) {
-			ins >> f >> s >> fg;
-			dict.insert(pair<string,Entity>(f,Entity(s,fg)));
-		}
-	}
-	else {
-		cout << "Файл не найден!" << endl;
-	}
-	ins.close();
-	return dict;
-}
-
 using Dict = multimap<string, Entity>;
-vector<Entity> suggest(const Dict& d, const string& current_word) {
-	vector<Entity> vec;
-	auto it = find_if(d.begin(), d.end(), [current_word](const pair<string, Entity>& a) {return a.first == current_word; });
-	while (it != d.end()) {
-		vec.push_back(it->second);
-		it = find_if(++it, d.end(), [current_word](const pair<string, Entity>& a) {return a.first == current_word; });
+
+multimap<string, Entity> load(const string &filename)
+{
+	ifstream fin;
+	fin.open(filename);
+	if (!fin.is_open())
+		cerr << "This file does not exist" << endl;
+	else 
+	{
+		fin.close();
+		fin.open(filename);
+		Dict objForTrans;
+		string str1, str2;
+		float fl;
+		Entity en;
+
+		while (fin >> str1 >> str2 >> fl) 
+		{
+			en.Query = str2;
+			en.Frequency = fl;
+			objForTrans.emplace(str1, en);
+			cout << str1 << " " << en.Query << " " << en.Frequency << endl;
+		}
+		fin.close();
+		return objForTrans;
 	}
-	if (vec.size()) sort(vec.begin(), vec.end(), [](const Entity& a, const Entity& b) {return a.Frequency > b.Frequency; }); //сортируем по частоте
-	return vec;
 }
 
-//для тестирования
-int main() {
+vector<Entity> suggest(const Dict &dict, const string &current_word) 
+{
+	vector<Entity> entity;
 
-	multimap<string, Entity> dict = load("dictionary.txt");
-	if (dict.size()) {
-		cout << "Словарь полученный из файла dictionary.txt:" << endl;
-		for (auto i : dict) {
-			cout << i.first << " -> " << i.second << endl;
-		}
-	}
-	else {
-		cout << "Словарь пуст!" << endl;
-	}
-	cout << endl;
+	auto result = dict.equal_range(current_word);
 
-	vector<Entity> result = suggest(dict, "добрый");
+	for (auto it = result.first; it != result.second; ++it)
+		entity.push_back(it->second);
 
-	if (result.size()) {
-		cout << "Результат предложения 'добрый' :" << endl;
-		for (auto i : result) {
-			cout << i <<"; ";
-		}
-		cout << endl;
-	}
-	else {
-		cout << "Ничего нет по данному предложению..." << endl;
-	}
+	sort(entity.begin(), entity.end(), [](const Entity &s1, const Entity &s2) 
+	{
+		return s1.Frequency > s2.Frequency;
+	});
 
-	cout << endl;
-	system("pause");
-	return 0;
+	return entity;
+}
+
+int main() 
+{
+	auto dict = load("matrix2.txt");
+
+	auto result = suggest(dict, "добрый");
+
+	cout << "result == ";
+
+	for (auto el : result)
+		cout << "{" << el.Query << ", " << el.Frequency << "} ";
 }
