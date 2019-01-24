@@ -3,114 +3,105 @@
 #include <map>
 #include <vector>
 #include <algorithm>
-#include <fstream>
-#include <numeric>
+
 using namespace std;
 
-struct Student {
+struct Student
+{
 	string Name;
 	string GroupId;
-	map<string, int> Ratings;
-
-	//небольшой конструктор для простоты
-	Student(string _name,string _gr,map<string,int> _rtg)
-		:Name(_name),
-		 GroupId(_gr),
-		 Ratings(_rtg){}
+	map<string, int> ratings;
 };
 
-//перегруженный оператор вывода в поток (cout)
-ostream& operator<<(ostream& os, const Student& st) {
-	cout << st.Name << "; " << st.GroupId << "; ";
-	cout << "Оценки: ";
-	for (auto i : st.Ratings) {
-		cout << i.first << ": " << i.second << "; ";
-	}
-	return os;
-}
+void Print(const vector<Student> &s);
 
-//считаем среднее значение
-double calc(const map<string, int>& a) {
-	int sum = 0;
-	for (auto i : a) sum += i.second;
-	return (double)sum / a.size();
-}
+int main()
+{
+    setlocale(LC_ALL, "ru");
+	vector<Student> students;
 
-//для тестирования
-int main() {
+	map<string, int> tempRatingsIvan = { { "Math", 3 },{ "ИНЖГРАФ", 5 },{ "ТОЭ", 4 },{ "Политология", 2 } };
+	map<string, int> tempRatingsEvgeny = { { "Math", 5 },{ "ИНЖГРАФ", 2 },{ "ТОЭ", 5 },{ "Политология", 5 } };
+	map<string, int> tempRatingsSlava = { { "Math", 4 },{ "ИНЖГРАФ", 3 },{ "ТОЭ", 5 },{ "Политология", 4 } };
+	map<string, int> tempRatingsMikhail = { { "Math", 3 },{ "ИНЖГРАФ", 5 },{ "ТОЭ", 4 },{ "Политология", 4 } };
+	map<string, int> tempRatingsSergey = { { "Math", 5 },{ "ИНЖГРАФ", 2 },{ "ТОЭ", 5 },{ "Политология", 3 } };
+	map<string, int> tempRatingsVitaly = { { "Math", 5 },{ "ИНЖГРАФ", 2 },{ "ТОЭ", 5 },{ "Политология", 3 } };
+	map<string, int> tempRatingsPetr = { { "Math", 2 },{ "ИНЖГРАФ", 2 },{ "ТОЭ", 5 },{ "Политология", 2 } };
+	map<string, int> tempRatingsVasya = { { "Math", 5 },{ "ИНЖГРАФ", 5 },{ "ТОЭ", 5 },{ "Политология", 5 } };
+	students.push_back({ "Иван", "РЛ1-11", tempRatingsIvan });
+	students.push_back({ "Евгений", "РЛ1-12", tempRatingsEvgeny });
+	students.push_back({ "Слава", "РЛ1-13", tempRatingsSlava });
+	students.push_back({ "Михаил", "ИУ8-31", tempRatingsMikhail });
+	students.push_back({ "Сергей", "ИУ8-31", tempRatingsSergey });
+	students.push_back({ "Виталий", "Э9-51", tempRatingsVitaly });
+	students.push_back({ "Пётр", "Э9-55", tempRatingsPetr });
+	students.push_back({ "Вася", "СМ5-113", tempRatingsVasya });
 
-	//предположим
-	vector<Student> students = {
-		Student("Ivan","1",{pair<string,int>("Math",5),pair<string,int>("Politic",4),pair<string,int>("Biology",5) }),
-		Student("Andrey","2",{ pair<string,int>("Math",4),pair<string,int>("Politic",5),pair<string,int>("Biology",5) }),
-		Student("Sasha","3",{ pair<string,int>("Math",4),pair<string,int>("Politic",2),pair<string,int>("Biology",4) }),
-		Student("Kirill","4",{ pair<string,int>("Math",5),pair<string,int>("Politic",5),pair<string,int>("Biology",5) }),
-		Student("Vadim","5",{ pair<string,int>("Math",5),pair<string,int>("Politic",3),pair<string,int>("Biology",2) })
-	};
+	cout << "Задание 1" << endl;
 
-	cout << "Список студентов:" << endl;
-	for (auto i : students) {
-		cout << i <<endl;
-	}
-	cout << endl;
-
-	//сортировка по имени
-	sort(students.begin(), students.end(), [](const Student& a,const Student& b) {return a.Name.compare(b.Name) < 0; }); //в алфавитном
-
-	cout << "Список студентов отсортированный по имени:" << endl;
-	for (auto i : students) {
-		cout << i << endl;
-	}
-	cout << endl;
-
-	//сортировка студентов по средней оценке
-	sort(students.begin(), students.end(), [](const Student& a,const Student& b) {
-		return calc(a.Ratings) < calc(b.Ratings); });
-	
-	cout << "Список студентов отсортированный по средней оценке:" << endl;
-	for (auto i : students) {
-		cout << i << endl;
-	}
-
-	cout <<endl<< "Кол-во студентов имеющих неудовлетворительную оценку: ";
-	cout << count_if(students.begin(), students.end(), [](const Student& a) {
-		return (count_if(a.Ratings.begin(), a.Ratings.end(),[](const pair<string, int>& b) {return b.second == 2; }) > 0) ? true : false; }) << endl;
-
-	cout << endl << "Кол-во студентов сдавших все экзамены на 5: ";
-	cout << count_if(students.begin(), students.end(), [](const Student& a) {
-		return (count_if(a.Ratings.begin(), a.Ratings.end(), [](const pair<string, int>& b) {return b.second == 5; }) == 3) ? true : false; }) << endl;
-
-	vector<Student> exlents; //отличники
-	
-	copy_if(students.begin(), students.end(), back_inserter(exlents), [](const Student& a) {
-		auto it = a.Ratings.find("Math");  
-		if(it != a.Ratings.end()) {
-			return (it->second == 5) ? true : false;
-		}
-		else return false;
+	sort(students.begin(), students.end(), [](Student &s1, Student &s2)
+	{
+		return s1.Name < s2.Name;
 	});
 
-	cout <<endl<< "Список отличников по математике:" << endl;
-	for (auto i : exlents) {
-		cout << i << endl;
-	}
+	Print(students);
 	cout << endl;
 
-	//выставляем отметку хорошо всем студентам по предмету Политология - Politic
-	transform(students.begin(), students.end(), students.begin(), [](Student& a) {
-		auto it = a.Ratings.find("Politic");
-		if (it != a.Ratings.end()) {
-			it->second = 5;
-		}
-		return a;
+	cout << "Задание 2" << endl;
+	sort(students.begin(), students.end(), [](Student &s1, Student &s2)
+	{
+		return (s1.ratings["Math"] + s1.ratings["ИНЖГРАФ"] + s1.ratings["ТОЭ"] + s1.ratings["Политология"]) / 4 >
+			(s2.ratings["Math"] + s2.ratings["ИНЖГРАФ"] + s2.ratings["ТОЭ"] + s2.ratings["Политология"]) / 4;
 	});
 
-	cout << "Измененный список студентов:" << endl;
-	for (auto i : students) {
-		cout << i << endl;
-	}
-
+	Print(students);
 	cout << endl;
-	system("pause");
-	return 0;
+
+	cout << "Задание 3" << endl;
+	cout << count_if(students.begin(), students.end(), [](Student &s)
+	{
+		return s.ratings["Math"] == 2 || s.ratings["ИНЖГРАФ"] == 2 ||
+			s.ratings["ТОЭ"] == 2 || s.ratings["Политология"] == 2;
+	});
+	cout << " студентов имеют неудовлетворительную оценку хотя бы по одному предмету" << endl;
+	cout << endl;
+
+	cout << "Задание 4" << endl;
+	cout << count_if(students.begin(), students.end(), [](Student &s)
+	{
+		return s.ratings["Math"] == 5 && s.ratings["ИНЖГРАФ"] == 5 &&
+			s.ratings["ТОЭ"] == 5 && s.ratings["Политология"] == 5;
+	});
+	cout << " студентов сдали все экзамены на 5" << endl;
+	cout << endl;
+
+	cout << "Задание 5" << endl;
+	vector<Student> exlents;
+	copy_if(students.begin(), students.end(), back_inserter(exlents), [](Student &s)
+	{
+		return s.ratings["Math"] == 5;
+	});
+
+	for (auto el : exlents)
+	{
+		cout << el.Name << endl;
+	}
+	cout << endl;
+
+	cout << "Задание 6" << endl;
+	transform(students.begin(), students.end(), students.begin(), [](Student &s)
+	{
+		s.ratings["Политология"] = 4;
+		return s;
+	});
+
+	Print(students);
+}
+void Print(const vector<Student> &s)
+{
+	for (auto el : s)
+	{
+		cout << el.Name << " | " << el.GroupId << " | " << "Math: " << el.ratings["Math"] << " ИНЖГРАФ: " << el.ratings["ИНЖГРАФ"]
+			<< " ТОЭ: " << el.ratings["ТОЭ"] << " Политология: " << el.ratings["Политология"] << endl;
+	}
 }
